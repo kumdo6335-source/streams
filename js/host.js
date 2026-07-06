@@ -80,6 +80,7 @@ function subscribeRoom() {
     players = {};
     snap.forEach((d) => { players[d.id] = d.data(); });
     renderPlayers();
+    updateDrawButtonState();
   });
 }
 
