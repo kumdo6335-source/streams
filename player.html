@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>스트림스 - 참가자 화면</title>
+<link rel="stylesheet" href="css/style.css" />
+</head>
+<body>
+  <div class="title-banner">
+    <h1>🌊 스트림스</h1>
+    <p>참가자(학생) 화면</p>
+  </div>
+
+  <div id="screen-join" class="panel center">
+    <h2>게임 참가</h2>
+    <p>방장이 알려준 4자리 코드를 입력하세요.</p>
+    <div class="row">
+      <input type="text" id="input-code" maxlength="4" inputmode="numeric" placeholder="방 코드 (예: 1234)" />
+    </div>
+    <p style="margin-top:16px">닉네임을 입력하세요.</p>
+    <div class="row">
+      <input type="text" id="input-nickname" maxlength="12" placeholder="닉네임" />
+    </div>
+    <div class="row" style="margin-top:20px">
+      <button id="btn-join" class="btn">입장하기</button>
+    </div>
+    <p class="error-msg" id="join-error"></p>
+  </div>
+
+  <div id="screen-waiting" class="panel center" style="display:none">
+    <h2>대기 중...</h2>
+    <p><strong id="waiting-nickname"></strong> 님, 방장이 게임을 시작할 때까지 기다려주세요.</p>
+  </div>
+
+  <div id="screen-playing" class="panel center" style="display:none">
+    <div class="row">
+      <div>닉네임: <strong id="playing-nickname"></strong></div>
+    </div>
+    <h3>현재 숫자</h3>
+    <div class="current-tile placeholder" id="current-tile">대기중</div>
+    <p id="status-banner" class="status-banner" style="display:none"></p>
+    <div id="board"></div>
+  </div>
+
+  <div id="screen-ended" class="panel center" style="display:none">
+    <h2>🏆 게임 종료 - 최종 순위</h2>
+    <ol class="leaderboard" id="leaderboard"></ol>
+    <h3>내 판 (<span id="my-total"></span>점)</h3>
+    <div id="my-board"></div>
+  </div>
+
+  <a class="back-link" href="index.html">← 처음으로</a>
+
+  <script type="module" src="js/player.js"></script>
+</body>
+</html>

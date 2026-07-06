@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>스트림스 - 방장 화면</title>
+<link rel="stylesheet" href="css/style.css" />
+</head>
+<body>
+  <div class="title-banner">
+    <h1>🌊 스트림스</h1>
+    <p>방장(교사) 화면</p>
+  </div>
+
+  <div id="screen-create" class="panel center">
+    <h2>새 게임 방 만들기</h2>
+    <p>방을 생성하면 4자리 코드가 발급됩니다. 학생들에게 코드를 알려주세요.</p>
+    <button id="btn-create" class="btn">방 만들기</button>
+    <p class="error-msg" id="create-error"></p>
+  </div>
+
+  <div id="screen-lobby" class="panel center" style="display:none">
+    <h2>참가자를 기다리는 중</h2>
+    <div class="code-display" id="room-code"></div>
+    <p>학생들이 이 코드를 입력해 참여합니다.</p>
+    <h3>참가자 (<span id="lobby-count">0</span>명)</h3>
+    <ul class="player-list" id="lobby-players"></ul>
+    <button id="btn-start-draw" class="btn gold">뽑기 시작</button>
+    <p class="error-msg" id="lobby-error"></p>
+  </div>
+
+  <div id="screen-playing" class="panel center" style="display:none">
+    <div class="row">
+      <div>방 코드: <strong id="playing-code"></strong></div>
+      <div>남은 타일: <strong id="tiles-left"></strong></div>
+    </div>
+    <div class="current-tile placeholder" id="current-tile">대기중</div>
+    <div class="row" style="margin-top:16px">
+      <button id="btn-draw" class="btn">뽑기</button>
+      <button id="btn-cancel" class="btn danger">취소(되돌리기)</button>
+    </div>
+    <p class="error-msg" id="playing-error"></p>
+
+    <h3>배치 현황 (<span id="placed-count">0</span>/<span id="total-players">0</span>)</h3>
+    <div class="progress-bar"><div id="progress-fill" style="width:0%"></div></div>
+    <ul class="player-list" id="playing-players"></ul>
+  </div>
+
+  <div id="screen-ended" class="panel center" style="display:none">
+    <h2>🏆 게임 종료 - 최종 순위</h2>
+    <ol class="leaderboard" id="leaderboard"></ol>
+    <p><a href="host.html?new=1" class="btn">새 방 만들기</a></p>
+  </div>
+
+  <a class="back-link" href="index.html">← 처음으로</a>
+
+  <script type="module" src="js/host.js"></script>
+</body>
+</html>
