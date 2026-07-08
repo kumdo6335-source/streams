@@ -154,6 +154,11 @@ async function handlePlace(index) {
   const saved = localStorage.getItem(LS_KEY);
   if (!saved) {
     showScreen("join");
+    const codeFromUrl = new URLSearchParams(location.search).get("code");
+    if (codeFromUrl) {
+      document.getElementById("input-code").value = codeFromUrl;
+      document.getElementById("input-nickname").focus();
+    }
     return;
   }
   try {

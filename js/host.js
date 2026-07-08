@@ -70,6 +70,7 @@ function subscribeRoom() {
   showScreen("lobby");
   document.getElementById("room-code").textContent = roomCode;
   document.getElementById("playing-code").textContent = roomCode;
+  setupJoinInfo();
 
   onSnapshot(doc(db, "rooms", roomCode), (snap) => {
     if (!snap.exists()) return;
@@ -81,6 +82,31 @@ function subscribeRoom() {
     snap.forEach((d) => { players[d.id] = d.data(); });
     renderPlayers();
     updateDrawButtonState();
+  });
+}
+
+function setupJoinInfo() {
+  const joinUrl = location.href.replace(/host\.html.*$/, `player.html?code=${roomCode}`);
+  const linkInput = document.getElementById("join-link");
+  linkInput.value = joinUrl;
+
+  const canvas = document.getElementById("qr-canvas");
+  if (window.QRCode) {
+    window.QRCode.toCanvas(canvas, joinUrl, { width: 176, margin: 1 }, (err) => {
+      if (err) console.warn("QR 코드 생성 실패:", err);
+    });
+  }
+
+  document.getElementById("btn-copy-link").addEventListener("click", async () => {
+    const hint = document.getElementById("copy-hint");
+    try {
+      await navigator.clipboard.writeText(joinUrl);
+    } catch {
+      linkInput.select();
+      document.execCommand("copy");
+    }
+    hint.textContent = "복사되었습니다!";
+    setTimeout(() => { hint.textContent = ""; }, 2000);
   });
 }
 
