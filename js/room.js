@@ -117,12 +117,16 @@ export async function placeTile(code, playerId, boardIndex) {
     const player = playerSnap.data();
     const lastIndex = room.drawHistory.length - 1;
     if (lastIndex < 0) throw new Error("아직 뽑힌 타일이 없습니다.");
-    if (player.placements[lastIndex] !== null) throw new Error("이미 이번 타일을 배치했습니다.");
     if (player.board[boardIndex] !== null) throw new Error("이미 채워진 칸입니다.");
 
+    // 다음 숫자가 뽑히기 전(같은 lastIndex)이면 위치를 바꿀 수 있도록 이전 배치를 비우고 새로 배치
     const board = player.board.slice();
-    board[boardIndex] = room.currentTile;
     const placements = player.placements.slice();
+    const prevIndex = placements[lastIndex];
+    if (prevIndex !== null && prevIndex !== undefined) {
+      board[prevIndex] = null;
+    }
+    board[boardIndex] = room.currentTile;
     placements[lastIndex] = boardIndex;
 
     tx.update(playerRef, { board, placements });
@@ -177,4 +181,21 @@ export async function finalizeGame(code, players) {
 
 export function playersCollection(code) {
   return collection(db, "rooms", code, "players");
+}
+
+// 방장이 방을 나갈 때 방/참가자 기록을 초기화(다음 게임에 이전 결과가 남지 않도록).
+// Firestore 규칙상 delete가 금지되어 있어(문서 존재는 유지) update로 완전히 새 게임 상태로 되돌린다.
+export async function resetRoom(code) {
+  const playersSnap = await getDocs(collection(db, "rooms", code, "players"));
+  await Promise.all(playersSnap.docs.map((d) =>
+    updateDoc(d.ref, { board: EMPTY_BOARD(), placements: [] })
+  ));
+  await updateDoc(doc(db, "rooms", code), {
+    status: "waiting",
+    deck: createDeck(),
+    drawHistory: [],
+    currentTile: null,
+    finalScores: null,
+    lastDrawAt: null,
+  });
 }

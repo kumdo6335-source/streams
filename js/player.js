@@ -1,6 +1,6 @@
 import { db, doc, onSnapshot } from "./firebase-init.js";
 import { getRoom, getPlayer, fetchNicknames, joinRoom, placeTile } from "./room.js";
-import { renderBoard, tileLabel } from "./ui-common.js";
+import { renderBoard, tileLabel, renderNumberTracker } from "./ui-common.js";
 import { computeScore } from "./scoring.js";
 
 const LS_KEY = "streams_player";
@@ -22,6 +22,22 @@ let roomCode = null;
 let playerId = null;
 let latestRoom = null;
 let latestPlayer = null;
+
+// 규칙 팝업: 입장 시 규칙을 먼저 보여주고, 확인을 누르면 콜백(대기 구독 시작)을 실행한다
+const rulesModal = document.getElementById("rules-modal");
+let onRulesConfirm = null;
+function openRulesModal(onConfirm) {
+  onRulesConfirm = typeof onConfirm === "function" ? onConfirm : null;
+  rulesModal.style.display = "flex";
+}
+function closeRulesModal() {
+  rulesModal.style.display = "none";
+  const cb = onRulesConfirm;
+  onRulesConfirm = null;
+  if (cb) cb();
+}
+document.getElementById("btn-rules-confirm").addEventListener("click", closeRulesModal);
+document.getElementById("btn-show-rules").addEventListener("click", () => openRulesModal());
 
 document.getElementById("btn-join").addEventListener("click", handleJoin);
 
@@ -55,7 +71,8 @@ async function handleJoin() {
     roomCode = code;
     playerId = id;
     localStorage.setItem(LS_KEY, JSON.stringify({ code, playerId: id }));
-    subscribe();
+    // 바로 대기 화면으로 가지 않고 규칙 팝업을 먼저 보여준 뒤, 확인을 누르면 대기 구독을 시작한다
+    openRulesModal(() => subscribe());
   } catch (e) {
     errEl.textContent = e.message;
   }
@@ -63,12 +80,24 @@ async function handleJoin() {
 
 function subscribe() {
   onSnapshot(doc(db, "rooms", roomCode), (snap) => {
-    if (!snap.exists()) return;
+    if (!snap.exists()) {
+      // 방장이 방을 삭제(처음으로 나가기 등)한 경우: 참가자 쪽 기록도 정리하고 참가 화면으로
+      localStorage.removeItem(LS_KEY);
+      latestRoom = null;
+      latestPlayer = null;
+      showScreen("join");
+      return;
+    }
     latestRoom = snap.data();
     render();
   });
   onSnapshot(doc(db, "rooms", roomCode, "players", playerId), (snap) => {
-    if (!snap.exists()) return;
+    if (!snap.exists()) {
+      localStorage.removeItem(LS_KEY);
+      latestPlayer = null;
+      showScreen("join");
+      return;
+    }
     latestPlayer = snap.data();
     render();
   });
@@ -86,6 +115,7 @@ function render() {
   if (latestRoom.status === "playing") {
     showScreen("playing");
     document.getElementById("playing-nickname").textContent = latestPlayer.nickname;
+    renderNumberTracker(document.getElementById("number-tracker"), latestRoom.drawHistory);
 
     const tileEl = document.getElementById("current-tile");
     if (latestRoom.currentTile === null) {
@@ -102,11 +132,11 @@ function render() {
       latestPlayer.placements[lastIndex] !== undefined;
 
     const banner = document.getElementById("status-banner");
-    const canPlace = lastIndex >= 0 && !alreadyPlaced;
+    const canPlace = lastIndex >= 0;
     if (alreadyPlaced) {
       banner.style.display = "";
       banner.className = "status-banner done";
-      banner.textContent = "배치 완료! 다음 숫자를 기다리는 중...";
+      banner.textContent = "배치 완료! 다음 숫자가 나오기 전까지는 다른 칸을 눌러 위치를 바꿀 수 있어요.";
     } else if (lastIndex < 0) {
       banner.style.display = "";
       banner.className = "status-banner waiting";

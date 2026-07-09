@@ -1,5 +1,6 @@
 import { SCORE_TABLE } from "./scoring.js";
 import { BOARD_PATH, BOARD_COLS, BOARD_ROWS } from "./board-path.js";
+import { TILE_KINDS, tileTotalCount } from "./deck.js";
 
 export function scoreTableHTML() {
   const entries = Object.entries(SCORE_TABLE);
@@ -60,4 +61,20 @@ export function renderBoard(container, board, { onCellClick, selectableEmpty = f
 
 export function tileLabel(value) {
   return value === "J" ? "★" : String(value);
+}
+
+// 등장 가능한 전체 숫자를 보여주고, 뽑힌 만큼 소진된 숫자는 음영 처리(11~19처럼 2개인 숫자는 둘 다 나와야 소진 표시)
+export function renderNumberTracker(container, drawHistory) {
+  const drawnCounts = {};
+  drawHistory.forEach((v) => { drawnCounts[v] = (drawnCounts[v] || 0) + 1; });
+
+  container.innerHTML = "";
+  container.classList.add("number-tracker");
+  TILE_KINDS.forEach((label) => {
+    const remaining = tileTotalCount(label) - (drawnCounts[label] || 0);
+    const cell = document.createElement("span");
+    cell.className = "tracker-cell" + (remaining <= 0 ? " used" : "");
+    cell.textContent = tileLabel(label);
+    container.appendChild(cell);
+  });
 }

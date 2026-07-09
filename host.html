@@ -8,7 +8,7 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
 <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@500;600;700&display=swap" rel="stylesheet" />
 <link rel="stylesheet" href="css/style.css" />
-<script src="https://cdn.jsdelivr.net/npm/qrcode@1.5.3/build/qrcode.min.js"></script>
+<script src="js/vendor/qrcode.min.js"></script>
 </head>
 <body>
   <div class="title-banner">
@@ -41,7 +41,7 @@
     <div class="join-box">
       <h3>📱 바로 참가하기</h3>
       <div class="qr-wrap">
-        <canvas id="qr-canvas"></canvas>
+        <div id="qr-canvas"></div>
       </div>
       <div class="row">
         <input type="text" id="join-link" readonly />
@@ -64,6 +64,10 @@
       <button id="btn-draw" class="btn">뽑기</button>
       <button id="btn-cancel" class="btn danger">취소(되돌리기)</button>
     </div>
+    <label class="row auto-mode-label">
+      <input type="checkbox" id="auto-mode-toggle" />
+      자동 모드 (모두 배치하면 자동으로 다음 숫자 뽑기)
+    </label>
     <p class="error-msg" id="playing-error"></p>
 
     <h3>배치 현황 (<span id="placed-count">0</span>/<span id="total-players">0</span>)</h3>
@@ -74,10 +78,10 @@
   <div id="screen-ended" class="panel center" style="display:none">
     <h2>🏆 게임 종료 - 최종 순위</h2>
     <ol class="leaderboard" id="leaderboard"></ol>
-    <p><a href="host.html?new=1" class="btn">새 방 만들기</a></p>
+    <p><a href="host.html?new=1" class="btn" id="btn-new-room">새 방 만들기</a></p>
   </div>
 
-  <a class="back-link" href="index.html">← 처음으로</a>
+  <a class="back-link" href="index.html" id="btn-back-home">← 처음으로</a>
 
   <script type="module" src="js/host.js"></script>
 </body>
