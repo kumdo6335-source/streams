@@ -1,5 +1,5 @@
 import { db, doc, onSnapshot, collection } from "./firebase-init.js";
-import { createRoom, drawTile, cancelDraw, finalizeGame, getRoom, resetRoom } from "./room.js";
+import { createRoom, drawTile, cancelDraw, finalizeGame, getRoom, closeRoom } from "./room.js";
 import { tileLabel } from "./ui-common.js";
 
 const LS_KEY = "streams_host_room";
@@ -50,19 +50,19 @@ document.getElementById("auto-mode-toggle").addEventListener("change", (e) => {
   maybeAutoDraw();
 });
 
-// 방장이 방을 나갈 때(처음으로/새 방 만들기): 이전 게임 기록이 다음 판에 남지 않도록 방/참가자 상태를 초기화
+// 방장이 방을 나갈 때(처음으로/새 방 만들기): 방을 종료(closed) 처리해 참가자들도 옛 방에서 나가도록 한다
 async function leaveRoom(e, destination) {
   e.preventDefault();
-  const codeToReset = roomCode;
-  if (codeToReset && latestRoom && latestRoom.status !== "ended") {
-    const ok = confirm("진행 중인 게임을 종료하고 나가시겠습니까? 참가자들의 배치 기록이 모두 초기화됩니다.");
+  const codeToClose = roomCode;
+  if (codeToClose && latestRoom && latestRoom.status !== "ended") {
+    const ok = confirm("진행 중인 게임을 종료하고 나가시겠습니까? 참가자들은 다시 입장해야 합니다.");
     if (!ok) return;
   }
   localStorage.removeItem(LS_KEY);
   roomCode = null;
-  if (codeToReset) {
+  if (codeToClose) {
     try {
-      await resetRoom(codeToReset);
+      await closeRoom(codeToClose);
     } catch (err) {
       console.warn(err);
     }
@@ -271,7 +271,7 @@ function updateDrawButtonState() {
 // 초기 진입: 저장된 방이 있으면 복귀, 없으면 생성 화면
 if (roomCode) {
   getRoom(roomCode).then((data) => {
-    if (data) {
+    if (data && data.status !== "closed") {
       subscribeRoom();
     } else {
       localStorage.removeItem(LS_KEY);

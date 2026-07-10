@@ -8,13 +8,16 @@ service cloud.firestore {
       allow get: if true;
       allow list: if false;
       allow create, update: if true;
-      allow delete: if false;
+      // 방장이 게임을 끝내고 나갈 때 방을 실제로 삭제해 기록이 쌓이지 않도록 허용.
+      // (로그인 없는 교실용 게임이라 create/update가 이미 공개되어 있어, delete 허용이
+      //  신뢰 모델을 실질적으로 바꾸지 않는다. 4자리 코드가 재사용될 수 있게 하는 목적이 크다.)
+      allow delete: if true;
 
       match /players/{playerId} {
         // 이 서브컬렉션을 조회하려면 이미 상위 roomCode를 알아야 하므로 list 허용.
         allow get, list: if true;
         allow create, update: if true;
-        allow delete: if false;
+        allow delete: if true;
       }
     }
   }

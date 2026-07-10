@@ -1,5 +1,5 @@
 import {
-  db, doc, getDoc, getDocs, setDoc, updateDoc, collection, runTransaction, serverTimestamp,
+  db, doc, getDoc, getDocs, setDoc, updateDoc, deleteDoc, collection, runTransaction, serverTimestamp,
 } from "./firebase-init.js";
 import { createDeck } from "./deck.js";
 import { computeScore } from "./scoring.js";
@@ -183,19 +183,24 @@ export function playersCollection(code) {
   return collection(db, "rooms", code, "players");
 }
 
-// 방장이 방을 나갈 때 방/참가자 기록을 초기화(다음 게임에 이전 결과가 남지 않도록).
-// Firestore 규칙상 delete가 금지되어 있어(문서 존재는 유지) update로 완전히 새 게임 상태로 되돌린다.
-export async function resetRoom(code) {
-  const playersSnap = await getDocs(collection(db, "rooms", code, "players"));
-  await Promise.all(playersSnap.docs.map((d) =>
-    updateDoc(d.ref, { board: EMPTY_BOARD(), placements: [] })
-  ));
-  await updateDoc(doc(db, "rooms", code), {
-    status: "waiting",
-    deck: createDeck(),
-    drawHistory: [],
-    currentTile: null,
-    finalScores: null,
-    lastDrawAt: null,
-  });
+// 방장이 방을 나갈 때 방을 닫는다. 두 단계로 처리해 규칙 배포 여부와 무관하게 안전하게 동작한다.
+//  1) 먼저 'closed'로 표시 → 참가자 클라이언트가 이를 감지해 스스로 기록을 지우고 입장 화면으로 돌아간다.
+//     (이전처럼 'waiting'으로 되돌리면 옛 참가자가 버려진 방에 자동 복귀해 갇히는 문제가 있어 'closed'로 닫는다.)
+//  2) 이어서 실제 삭제를 시도 → Firestore 규칙에서 delete를 허용(배포)한 경우에만 성공하며,
+//     방/참가자 문서를 지워 기록이 쌓이지 않게 하고 4자리 코드를 재사용할 수 있게 한다.
+//     규칙 미배포 시엔 삭제가 거부되지만 (1)의 'closed' 상태로 기능은 정상 동작한다.
+export async function closeRoom(code) {
+  try {
+    await updateDoc(doc(db, "rooms", code), { status: "closed", currentTile: null });
+  } catch (e) {
+    // 이미 삭제되었거나 존재하지 않는 경우 등은 무시
+  }
+  try {
+    const playersSnap = await getDocs(collection(db, "rooms", code, "players"));
+    await Promise.all(playersSnap.docs.map((d) => deleteDoc(d.ref)));
+    await deleteDoc(doc(db, "rooms", code));
+  } catch (e) {
+    // 규칙에서 delete를 아직 허용하지 않으면 여기서 거부된다. 'closed' 상태로 남겨 두면 되므로 무시.
+    console.warn("방 삭제를 건너뜁니다(Firestore 규칙에 delete 허용이 배포되지 않았을 수 있음):", e.message);
+  }
 }

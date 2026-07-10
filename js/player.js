@@ -66,6 +66,10 @@ async function handleJoin() {
       errEl.textContent = "이미 종료된 게임입니다.";
       return;
     }
+    if (room.status === "closed") {
+      errEl.textContent = "종료된 방입니다. 방장에게 새 코드를 받아 입장해주세요.";
+      return;
+    }
     const existing = await fetchNicknames(code);
     const id = await joinRoom(code, nickname, existing);
     roomCode = code;
@@ -78,24 +82,39 @@ async function handleJoin() {
   }
 }
 
+let unsubRoom = null;
+let unsubPlayer = null;
+
+function cleanupSubscriptions() {
+  if (unsubRoom) { unsubRoom(); unsubRoom = null; }
+  if (unsubPlayer) { unsubPlayer(); unsubPlayer = null; }
+}
+
+// 방이 종료(closed)되었거나 사라진 경우: 구독을 끊고 이 참가자의 기록을 지운 뒤 입장 화면으로 돌아간다.
+// (다음 게임은 방장이 새 코드로 안내하므로, 옛 방에 갇히지 않고 새로 입장할 수 있게 한다.)
+function resetToJoin() {
+  cleanupSubscriptions();
+  localStorage.removeItem(LS_KEY);
+  roomCode = null;
+  playerId = null;
+  latestRoom = null;
+  latestPlayer = null;
+  showScreen("join");
+}
+
 function subscribe() {
-  onSnapshot(doc(db, "rooms", roomCode), (snap) => {
-    if (!snap.exists()) {
-      // 방장이 방을 삭제(처음으로 나가기 등)한 경우: 참가자 쪽 기록도 정리하고 참가 화면으로
-      localStorage.removeItem(LS_KEY);
-      latestRoom = null;
-      latestPlayer = null;
-      showScreen("join");
+  cleanupSubscriptions(); // 이전 방 구독이 남아 새 방 화면을 덮어쓰지 않도록 먼저 정리
+  unsubRoom = onSnapshot(doc(db, "rooms", roomCode), (snap) => {
+    if (!snap.exists() || snap.data().status === "closed") {
+      resetToJoin();
       return;
     }
     latestRoom = snap.data();
     render();
   });
-  onSnapshot(doc(db, "rooms", roomCode, "players", playerId), (snap) => {
+  unsubPlayer = onSnapshot(doc(db, "rooms", roomCode, "players", playerId), (snap) => {
     if (!snap.exists()) {
-      localStorage.removeItem(LS_KEY);
-      latestPlayer = null;
-      showScreen("join");
+      resetToJoin();
       return;
     }
     latestPlayer = snap.data();
@@ -194,7 +213,8 @@ async function handlePlace(index) {
   try {
     const { code, playerId: id } = JSON.parse(saved);
     const [room, player] = await Promise.all([getRoom(code), getPlayer(code, id)]);
-    if (room && player) {
+    // 종료(closed)된 방에는 재접속하지 않고, 저장된 기록을 지워 새 게임에 입장할 수 있게 한다
+    if (room && player && room.status !== "closed") {
       roomCode = code;
       playerId = id;
       subscribe();
