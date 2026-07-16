@@ -290,13 +290,36 @@ table.score-table th { background: var(--blue); color: white; }
 }
 .auto-mode-label input { width: 18px; height: 18px; cursor: pointer; }
 
-.number-tracker {
+/* 게임 중 화면: 왼쪽(또는 좁은 화면에서는 아래) 숫자 트래커 + 오른쪽 보드, 크롬북 화면에 한눈에 들어오도록 가로로 배치 */
+.panel.wide { max-width: 1040px; }
+.play-layout {
   display: flex;
+  gap: 18px;
+  align-items: flex-start;
+  justify-content: center;
+  flex-wrap: wrap-reverse;
+}
+.play-main { flex: 1 1 480px; min-width: 300px; }
+
+.playing-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
   flex-wrap: wrap;
+  margin-bottom: 6px;
+}
+.current-tile-box { display: flex; align-items: center; gap: 10px; }
+.current-tile-label { font-weight: 700; color: var(--ink); }
+
+.number-tracker {
+  display: grid;
+  grid-template-columns: repeat(4, 30px);
   gap: 5px;
   justify-content: center;
-  margin: 10px auto 18px;
-  max-width: 480px;
+  align-content: start;
+  flex: 0 0 auto;
+  padding-top: 4px;
 }
 .tracker-cell {
   width: 30px;

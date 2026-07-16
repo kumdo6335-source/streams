@@ -63,7 +63,8 @@ export function tileLabel(value) {
   return value === "J" ? "★" : String(value);
 }
 
-// 등장 가능한 전체 숫자를 보여주고, 뽑힌 만큼 소진된 숫자는 음영 처리(11~19처럼 2개인 숫자는 둘 다 나와야 소진 표시)
+// 등장 가능한 전체 숫자를 보여주고, 뽑힌 만큼 소진된 숫자는 음영 처리.
+// 11~19처럼 2개인 숫자는 칸을 2개씩 표시해서, 하나만 나와도 그중 하나만 소진 표시되게 한다.
 export function renderNumberTracker(container, drawHistory) {
   const drawnCounts = {};
   drawHistory.forEach((v) => { drawnCounts[v] = (drawnCounts[v] || 0) + 1; });
@@ -71,10 +72,14 @@ export function renderNumberTracker(container, drawHistory) {
   container.innerHTML = "";
   container.classList.add("number-tracker");
   TILE_KINDS.forEach((label) => {
-    const remaining = tileTotalCount(label) - (drawnCounts[label] || 0);
-    const cell = document.createElement("span");
-    cell.className = "tracker-cell" + (remaining <= 0 ? " used" : "");
-    cell.textContent = tileLabel(label);
-    container.appendChild(cell);
+    const total = tileTotalCount(label);
+    const drawnCount = drawnCounts[label] || 0;
+    for (let i = 0; i < total; i++) {
+      const used = i < drawnCount;
+      const cell = document.createElement("span");
+      cell.className = "tracker-cell" + (used ? " used" : "");
+      cell.textContent = tileLabel(label);
+      container.appendChild(cell);
+    }
   });
 }

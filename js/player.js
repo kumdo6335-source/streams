@@ -41,6 +41,15 @@ document.getElementById("btn-show-rules").addEventListener("click", () => openRu
 
 document.getElementById("btn-join").addEventListener("click", handleJoin);
 
+// 이전에 참가했던 방(특히 이미 종료된 게임)에 계속 붙잡혀 있지 않도록,
+// 대기/진행/종료 화면 어디서든 저장된 기록을 지우고 입장 화면으로 나갈 수 있게 한다.
+["btn-leave-waiting", "btn-leave-playing", "btn-leave-ended"].forEach((id) => {
+  document.getElementById(id).addEventListener("click", () => resetToJoin());
+});
+document.getElementById("link-home").addEventListener("click", () => {
+  localStorage.removeItem(LS_KEY);
+});
+
 async function handleJoin() {
   const errEl = document.getElementById("join-error");
   errEl.textContent = "";
