@@ -5,6 +5,7 @@ export const SCORE_TABLE = {
 };
 
 // board: 20칸 배열(경로 순서), 값은 숫자 | "J" | null
+// 다음 숫자가 이전 숫자보다 크거나 "같으면" 같은 구간으로 이어지고, 작을 때만 구간이 끊긴다.
 // 조커는 앞뒤 어느 쪽과도 항상 이어지며 구간을 끊지 않는다 (양옆에 대해 각각 독립적으로 판단, 두 번 이어주는 것으로 계산하지 않고 단순히 "끊기지 않음"으로만 취급).
 export function computeScore(board) {
   const segments = [];
@@ -13,7 +14,7 @@ export function computeScore(board) {
   for (let i = 1; i < board.length; i++) {
     const prev = board[i - 1];
     const curr = board[i];
-    const isBreak = !(prev === "J" || curr === "J" || Number(curr) > Number(prev));
+    const isBreak = !(prev === "J" || curr === "J" || Number(curr) >= Number(prev));
     if (isBreak) {
       segments.push({ start: segStart, end: i - 1, length: i - segStart });
       segStart = i;
